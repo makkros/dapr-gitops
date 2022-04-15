@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  catalog
+  namespace: default
+  labels:
+    app:  catalog
+spec:
+  selector:
+    matchLabels:
+      app: catalog-api
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  catalog-api
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "catalog-api"
+        dapr.io/app-port: "80"
+        dapr.io/log-level: "debug"
+        # Default options
+        dapr.io/enable-profiling: "false"
+        dapr.io/metrics-port: "9090"
+    spec:
+      imagePullSecrets:
+      - name: acr-registry
+      containers:
+      - name:  catalog-api
+        image:  nicoliscr.azurecr.io/catalog-api:0.2.0-alpha.5
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 250m
+            memory: 250Mi
+        env:
+        - name: "ASPNETCORE_ENVIRONMENT"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: environment
+        - name: "ASPNETCORE_URLS"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: urls
+        - name: "ConnectionStrings__Default"
+          valueFrom:
+            configMapKeyRef:
+              name: connectionstrings
+              key: connectionstrings__default
+        - name: "Logging__LogLevel__Default"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: logging.microsoft.aspnetcore
+        - name: "Logging__LogLevel__Microsoft.AspNetCore"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: logging.microsoft.aspnetcore
+        ports:
+        - containerPort:  80
+          name:  catalog-api
+      restartPolicy: Always

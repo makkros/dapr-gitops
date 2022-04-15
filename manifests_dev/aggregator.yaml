@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  aggregator
+  namespace: default
+  labels:
+    app:  aggregator
+spec:
+  selector:
+    matchLabels:
+      app: aggregator-api
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  aggregator-api
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "aggregator-api"
+        dapr.io/app-port: "80"
+        dapr.io/log-level: "debug"
+        # Default options
+        #dapr.io/sidecar-image: daprio/daprd:latest
+        dapr.io/enable-profiling: "false"
+        dapr.io/metrics-port: "9090"
+    spec:
+      imagePullSecrets:
+      - name: acr-registry
+      containers:
+      - name:  aggregator-api
+        image:  nicoliscr.azurecr.io/aggregator-api:0.2.0-alpha.5
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 250m
+            memory: 250Mi
+        # livenessProbe:
+        #   httpGet:
+        #     path: v1.0/healthz
+        #     port: 3500
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 10
+        #   timeoutSeconds : 5
+        #   failureThreshold : 3
+        # readinessProbe:
+        #   httpGet:
+        #     path: v1.0/healthz
+        #     port: 3500
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 10
+        #   timeoutSeconds : 5
+        #   failureThreshold: 3  
+        volumeMounts:
+          - name: local-volume
+            mountPath: /storage/files/    
+        env:
+        - name: "ASPNETCORE_ENVIRONMENT"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: environment
+        - name: "ASPNETCORE_URLS"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: urls
+        - name: "Logging__LogLevel__Default"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: logging.microsoft.aspnetcore
+        - name: "Logging__LogLevel__Microsoft.AspNetCore"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: logging.microsoft.aspnetcore
+        ports:
+        - containerPort:  80
+          name:  aggregator-api
+      volumes:
+        - name: local-volume
+          persistentVolumeClaim:
+            claimName: current-pvc
+      restartPolicy: Always
+
+

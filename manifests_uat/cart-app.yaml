@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  cart-app
+  namespace: default
+  labels:
+    app:  cart-app
+spec:
+  selector:
+    matchLabels:
+      app: cart-app
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  cart-app
+    spec:
+      imagePullSecrets:
+      - name: acr-registry
+      containers:
+      - name:  cart-app
+        image:  nicoliscr.azurecr.io/cart-app:0.2.0-alpha.5
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 250m
+            memory: 250Mi       
+        # env:
+        #   - name: "ENVOY_URL"
+        #     value: "http://envoyservice.default.svc.cluster.local:10000" 
+        ports:
+        - containerPort:  80
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-service
+spec:
+  selector:
+    app: cart-app
+  type: ClusterIP
+  ports:
+  - port: 8082
+    targetPort: 80

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  order
+  namespace: default
+  labels:
+    app:  order
+spec:
+  selector:
+    matchLabels:
+      app: order-api
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  order-api
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: "order-api"
+        dapr.io/app-port: "80"
+        dapr.io/log-level: "debug"
+        # Default options
+        dapr.io/enable-profiling: "false"
+        dapr.io/metrics-port: "9090"
+    spec:
+      imagePullSecrets:
+      - name: acr-registry
+      containers:
+      - name:  order-api
+        image:  nicoliscr.azurecr.io/order-api:0.2.0-alpha.5
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 250m
+            memory: 250Mi  
+        volumeMounts:
+          - name: local-volume
+            mountPath: /storage/files/       
+        env:
+        - name: "ASPNETCORE_ENVIRONMENT"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: environment
+        - name: "ASPNETCORE_URLS"
+          valueFrom:
+            configMapKeyRef:
+              name: aspnetcore
+              key: urls
+        - name: "ConnectionStrings__Mongo"
+          valueFrom:
+            configMapKeyRef:
+              name: connectionstrings
+              key: connectionstrings__mongo
+        volumeMounts:
+          - name:  local-volume
+            mountPath:  "/storage/files"
+        ports:
+        - containerPort:  80
+          name:  order-api
+      volumes:
+        - name: local-volume
+          persistentVolumeClaim:
+            claimName: current-pvc
+      restartPolicy: Always
