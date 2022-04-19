@@ -5194,10 +5194,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 100m
+            cpu: 1000m
             memory: 1Gi
           requests:
-            cpu: 50m
+            cpu: 100m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -5276,10 +5276,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 100m
+            cpu: 1000m
             memory: 1Gi
           requests:
-            cpu: 50m
+            cpu: 100m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -5363,10 +5363,10 @@ spec:
             port: healthz
         resources:
           limits:
-            cpu: 100m
+            cpu: 1000m
             memory: 1Gi
           requests:
-            cpu: 50m
+            cpu: 100m
             memory: 64Mi
         securityContext:
           allowPrivilegeEscalation: false
@@ -5452,7 +5452,7 @@ spec:
             port: http
         resources:
           limits:
-            cpu: 100m
+            cpu: 1000m
             memory: 1Gi
           requests:
             cpu: 50m
